@@ -2,7 +2,24 @@
 import jwt from "jsonwebtoken";
 import { adminUserRepo } from "../database/db.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "zalo-admin-secret-key-change-in-production-2026";
+// Các giá trị mặc định đã công khai trên GitHub -> ai cũng có thể tự ký token admin.
+const KNOWN_DEFAULT_SECRETS = new Set([
+    "zalo-admin-secret-key-change-in-production-2026",
+    "zalo-admin-secret-key-change-in-production-2026-ubuntu-deployment",
+]);
+
+function resolveJwtSecret(): string {
+    const secret = (process.env.JWT_SECRET || "").trim();
+    if (!secret || KNOWN_DEFAULT_SECRETS.has(secret) || secret.length < 32) {
+        throw new Error(
+            "JWT_SECRET chưa được cấu hình an toàn. Đặt JWT_SECRET ngẫu nhiên (>= 32 ký tự) trong server/.env, ví dụ: " +
+            "node -e \"console.log(require('crypto').randomBytes(48).toString('hex'))\""
+        );
+    }
+    return secret;
+}
+
+export const JWT_SECRET = resolveJwtSecret();
 
 export interface AuthenticatedRequest extends Request {
     user?: {

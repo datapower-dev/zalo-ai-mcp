@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { sessionManager } from "../services/sessionManager.js";
 import { messageLogRepo } from "../database/db.js";
 import { ThreadType } from "zalo-api-final";
@@ -93,7 +93,7 @@ chatRouter.get("/:id/groups", async (req: Request, res: Response) => {
 chatRouter.get("/:id/history/:threadId", (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const threadId = Array.isArray(req.params.threadId) ? req.params.threadId[0] : req.params.threadId;
-    const limit = Number(req.query.limit || 50);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
 
     try {
         const history = messageLogRepo.getRecentByThread(id, threadId, limit);

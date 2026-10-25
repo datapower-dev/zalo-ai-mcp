@@ -11,7 +11,7 @@
     "@google/generative-ai": "^0.24.1",
     "@pinecone-database/pinecone": "^9.0.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^11.8.1",
+    "better-sqlite3": "^12.11.1",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.3",

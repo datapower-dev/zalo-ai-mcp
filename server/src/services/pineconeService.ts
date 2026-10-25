@@ -20,23 +20,42 @@ export class PineconeService {
     private embeddingModel: string;
     private rerankModel: string;
     private dimension: number;
-    private pc: Pinecone;
+    private pc: Pinecone | null;
+    public readonly enabled: boolean;
 
     constructor() {
-        this.apiKey = process.env.PINECONE_API_KEY || "pcsk_4HbBA_NT38iejn5GS2kyXYemdfbk8oyz5E2J34QzTHaQTJ9JTyMMbdRjbBRi94nZ8xroe";
-        this.host = process.env.PINECONE_HOST || "https://semirag-gpxczi5.svc.aped-4627-b74a.pinecone.io";
+        // KHÔNG có key/host mặc định: nếu không cấu hình thì tắt Pinecone và dùng tìm kiếm cục bộ.
+        // (Bản gốc hardcode API key + host Pinecone của tác giả -> tài liệu nội bộ và câu hỏi
+        // khách hàng sẽ bị gửi sang index của người khác.)
+        const rawKey = (process.env.PINECONE_API_KEY || "").trim();
+        const rawHost = (process.env.PINECONE_HOST || "").trim();
+        const isPlaceholder = (v: string) => !v || /x{4,}/i.test(v);
+
+        this.enabled = !isPlaceholder(rawKey);
+        this.apiKey = this.enabled ? rawKey : "";
+        this.host = isPlaceholder(rawHost) ? "" : rawHost;
         this.indexName = process.env.PINECONE_INDEX || "CSKH";
         this.embeddingModel = "llama-text-embed-v2";
         this.rerankModel = "bge-reranker-v2-m3";
         this.dimension = 1024;
 
-        this.pc = new Pinecone({
-            apiKey: this.apiKey,
-        });
+        this.pc = this.enabled ? new Pinecone({ apiKey: this.apiKey }) : null;
+
+        if (!this.enabled) {
+            console.warn("⚠️ [Pinecone] PINECONE_API_KEY chưa cấu hình -> tắt vector search, dùng tìm kiếm từ khóa cục bộ.");
+        }
+    }
+
+    private getClient(): Pinecone {
+        if (!this.pc) {
+            throw new Error("Pinecone chưa được cấu hình (PINECONE_API_KEY trống). Hệ thống đang dùng tìm kiếm cục bộ.");
+        }
+        return this.pc;
     }
 
     private getIndex() {
-        return this.pc.index(this.indexName, this.host);
+        const pc = this.getClient();
+        return this.host ? pc.index(this.indexName, this.host) : pc.index(this.indexName);
     }
 
     private sanitizeNamespace(groupName?: string): string {
@@ -55,7 +74,7 @@ export class PineconeService {
             throw new Error("Văn bản embedding không được rỗng");
         }
 
-        const res = await this.pc.inference.embed({
+        const res = await this.getClient().inference.embed({
             model: this.embeddingModel,
             inputs: [cleanText],
             parameters: { inputType, truncate: "END" },
@@ -166,7 +185,7 @@ export class PineconeService {
         }
 
         try {
-            const res = await this.pc.inference.rerank({
+            const res = await this.getClient().inference.rerank({
                 model: this.rerankModel,
                 query: query.trim(),
                 documents: documents,

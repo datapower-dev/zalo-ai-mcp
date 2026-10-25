@@ -25,7 +25,7 @@ export function App() {
   const [isQROpen, setIsQROpen] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
-  const socketRef = useSocket();
+  const socket = useSocket(token);
 
   // Listen for unauthorized 401 events to log user out
   useEffect(() => {
@@ -58,7 +58,6 @@ export function App() {
 
   // Listen to socket account events
   useEffect(() => {
-    const socket = socketRef.current;
     if (!socket) return;
 
     const handleStatusChange = () => {
@@ -79,7 +78,7 @@ export function App() {
       socket.off("account:status_change", handleStatusChange);
       socket.off("account:deleted", handleDeleted);
     };
-  }, [socketRef, fetchAccounts, selectedAccountId]);
+  }, [socket, fetchAccounts, selectedAccountId]);
 
   const handleSelectChat = (accountId: string) => {
     setSelectedAccountId(accountId);
@@ -152,7 +151,7 @@ export function App() {
             accounts={accounts}
             selectedAccountId={selectedAccountId}
             setSelectedAccountId={setSelectedAccountId}
-            socket={socketRef.current}
+            socket={socket}
           />
         )}
 
@@ -169,7 +168,7 @@ export function App() {
       <QRModal
         isOpen={isQROpen}
         onClose={() => setIsQROpen(false)}
-        socket={socketRef.current}
+        socket={socket}
         onSuccess={fetchAccounts}
       />
 

@@ -17,5 +17,6 @@ export default defineConfig([
             "no-extra-boolean-cast": "off",
         },
     },
-    globalIgnores(["dist/*"]),
+    // server/ và client/ là package riêng (tsconfig strict + toolchain riêng), không lint bằng config của thư viện core
+    globalIgnores(["dist/*", "server/**", "client/**", "docs/**"]),
 ]);

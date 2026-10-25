@@ -1,9 +1,9 @@
+import "./loadEnv.js";
 import express from "express";
 import http from "node:http";
 import path from "node:path";
 import fs from "node:fs";
 import cors from "cors";
-import dotenv from "dotenv";
 import { Server } from "socket.io";
 import { initDatabase } from "./database/db.js";
 import { sessionManager } from "./services/sessionManager.js";
@@ -13,8 +13,6 @@ import { chatRouter } from "./routes/chatRoutes.js";
 import { aiRouter } from "./routes/aiRoutes.js";
 import { authRouter } from "./routes/authRoutes.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
